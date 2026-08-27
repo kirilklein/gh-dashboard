@@ -1,0 +1,14 @@
+{
+  "account": null,
+  "days": 366,
+  "timezone": null,
+  "country": null,
+  "holidays": [],
+  "off_days": [],
+  "events": [],
+  "public_only": false,
+  "exclude_repos": [],
+  "loc_repos": [],
+  "loc_repo_limit": 8,
+  "big_pr": 10000
+}
