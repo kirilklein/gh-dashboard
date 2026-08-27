@@ -5,3 +5,5 @@ __pycache__/
 config.local.json
 dist/*
 !dist/index.html
+out/
+.claude/
