@@ -1,7 +1,7 @@
 __pycache__/
 # personal data never enters the repo; the tracked dist/ is the demo build only
-raw.json
-data.json
+/raw.json
+/data.json
 config.local.json
 dist/*
 !dist/index.html
