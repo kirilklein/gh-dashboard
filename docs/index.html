@@ -102,7 +102,7 @@ tr.pick.off td{opacity:.45}
 .panel h3{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:24px;margin:0}
 .panel label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--ink-2)}
 .panel label .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.panel select,.panel textarea,.panel input[type=text]{font:13px "IBM Plex Mono",monospace;color:var(--ink);background:var(--surface-2);
+.panel select,.panel textarea,.panel input[type=text],.panel input[type=date]{font:13px "IBM Plex Mono",monospace;color:var(--ink);background:var(--surface-2);
   border:1px solid var(--line);border-radius:3px;padding:7px 8px;width:100%}
 .panel textarea{min-height:64px;resize:vertical}
 .panel .row{display:flex;gap:8px;align-items:center;font-size:13px}
@@ -127,9 +127,9 @@ tr.pick.off td{opacity:.45}
       <button id="btn-theme" title="Toggle theme">Theme</button>
       <button id="btn-settings" title="Holidays, timezone, days off">Settings</button>
     </div>
-    <div class="eyebrow">GitHub · octodev · 27 Aug 2025 - 27 Aug 2026</div>
-    <h1><span id="h-merged"></span> pull requests, <em>one year</em></h1>
-    <p class="dek">Everything merged under the <strong>octodev</strong> account over the last twelve months, across <span id="h-repos"></span> repositories: the cadence, where the work landed, and what the shape of a working day looks like from the outside.</p>
+    <div class="eyebrow">GitHub · octodev · <span id="h-range">27 Aug 2025 - 27 Aug 2026</span></div>
+    <h1><span id="h-merged"></span> pull requests, <em id="h-span">one year</em></h1>
+    <p class="dek">Everything merged under the <strong>octodev</strong> account <span id="h-period">over the last twelve months</span>, across <span id="h-repos"></span> repositories: the cadence, where the work landed, and what the shape of a working day looks like from the outside.</p>
     <div class="filter" id="filter"><span>Showing only <b id="filter-name"></b></span><button class="pill btn" id="filter-clear">clear filter</button></div>
   </header>
 
@@ -255,6 +255,9 @@ tr.pick.off td{opacity:.45}
 
 <aside class="panel" id="panel" aria-label="Settings">
   <h3>Settings</h3>
+  <label><span class="k">Time frame</span>
+    <div class="row"><input type="date" id="s-from"><input type="date" id="s-to"></div>
+    <span class="hint">Any window inside the collected range. Every number recomputes.</span></label>
   <label><span class="k">Public holidays</span>
     <select id="s-country"></select></label>
   <label><span class="k">Timezone</span>
@@ -292,6 +295,7 @@ const DEF = {
   country: D.settings.country || '', tz: D.settings.timezone || BROWSER_TZ,
   holidays: D.settings.holidays.join('\n'), offDays: D.settings.offDays.join('\n'),
   events: D.settings.events.map(e => e.join(' ')).join('\n'), anon: false, theme: 'auto',
+  from: D.start, to: D.end,
 };
 const KEY = 'gh-dashboard:' + D.account;
 let ST = {...DEF};
@@ -331,7 +335,7 @@ function localizer(tz) {
 /* ---------- aggregation (everything the charts need, from PR-level rows) ---------- */
 function compute() {
   const loc = localizer(ST.tz);
-  const days = []; for (let d = D.start; d <= D.end; d = addDays(d, 1)) days.push(d);
+  const days = []; for (let d = ST.from; d <= ST.to; d = addDays(d, 1)) days.push(d);
   const dayIdx = new Map(days.map((d, i) => [d, i]));
   const country = D.holidays[ST.country];
   const off = parseDates(ST.offDays);
@@ -466,6 +470,10 @@ function render() {
   $('h-merged').textContent = fmt(S.merged);
   $('h-repos').textContent = S.repoCount;
   $('h-tz').textContent = ST.tz;
+  const full = ST.from === D.start && ST.to === D.end, shortDate = iso => longDate(iso).replace(/^\w+,\s*/, '');
+  $('h-range').textContent = `${shortDate(ST.from)} – ${shortDate(ST.to)}`;
+  $('h-span').textContent = full ? 'one year' : `${S.calDays} days`;
+  $('h-period').textContent = full ? 'over the last twelve months' : `between ${shortDate(ST.from)} and ${shortDate(ST.to)}`;
   $('h-bigpr').textContent = fmt(D.bigPr); $('m-bigpr').textContent = fmt(D.bigPr);
   $('filter').classList.toggle('show', repoSel !== null);
   if (repoSel !== null) $('filter-name').textContent = repoName(repoSel);
@@ -716,14 +724,19 @@ function render() {
   const fill = () => {
     c.value = ST.country; $('s-tz').value = ST.tz; $('s-holidays').value = ST.holidays;
     $('s-off').value = ST.offDays; $('s-events').value = ST.events; $('s-anon').checked = ST.anon;
+    $('s-from').value = ST.from; $('s-to').value = ST.to;
   };
+  ['s-from', 's-to'].forEach(id => { $(id).min = D.start; $(id).max = D.end; });
   fill();
   const read = () => {
     ST.country = c.value; ST.tz = $('s-tz').value; ST.holidays = $('s-holidays').value;
     ST.offDays = $('s-off').value; ST.events = $('s-events').value; ST.anon = $('s-anon').checked;
+    const f = $('s-from').value, t = $('s-to').value;
+    const ok = f >= D.start && t <= D.end && f <= t;
+    ST.from = ok ? f : D.start; ST.to = ok ? t : D.end;
     save(); render();
   };
-  let t; ['s-country', 's-tz', 's-holidays', 's-off', 's-events', 's-anon'].forEach(id =>
+  let t; ['s-country', 's-tz', 's-holidays', 's-off', 's-events', 's-anon', 's-from', 's-to'].forEach(id =>
     $(id).addEventListener('input', () => { clearTimeout(t); t = setTimeout(read, 250); }));
   $('s-reset').addEventListener('click', () => { const theme = ST.theme; ST = {...DEF, theme}; fill(); save(); render(); });
   $('btn-settings').addEventListener('click', () => $('panel').classList.toggle('open'));
