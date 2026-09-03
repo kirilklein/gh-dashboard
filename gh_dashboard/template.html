@@ -59,6 +59,7 @@ section{display:flex;flex-direction:column;gap:16px}
 @media(min-width:860px){.hl{grid-template-columns:1fr 1fr}}
 .hl li{padding-left:14px;border-left:2px solid var(--accent)}
 .hl b{color:var(--ink);font-weight:600}
+.hl b a{color:inherit;text-decoration:none;border-bottom:1px dotted var(--muted)}
 .hl a{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .tile{background:var(--surface);padding:16px 18px 18px;display:flex;flex-direction:column;gap:3px}
 .tile .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
@@ -68,6 +69,14 @@ section{display:flex;flex-direction:column;gap:16px}
 .tile.hi .v{color:var(--accent)}
 .grid2{display:grid;gap:clamp(16px,2.5vw,24px);grid-template-columns:1fr}
 @media(min-width:860px){.grid2{grid-template-columns:1.35fr 1fr}}
+.grid3{display:grid;gap:clamp(16px,2.5vw,24px);grid-template-columns:minmax(0,1fr)}
+@media(min-width:700px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.grid3 .card{gap:6px;scroll-margin-top:24px;min-width:0}
+.grid3 h2{font-size:20px}
+.rec td{white-space:nowrap}
+.rec td.dim{color:var(--muted);font-size:12.5px}
+.rec td.list{white-space:normal;text-align:left;padding-left:14px;color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:11.5px;line-height:1.35}
+.rec a{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .chart{width:100%;display:block;overflow:visible}
 .scroller{overflow-x:auto}
 .fill{position:relative;flex:1;min-height:240px}
@@ -248,6 +257,14 @@ tr.pick.off td{opacity:.45}
     </div>
   </section>
 
+  <section>
+    <div>
+      <h2>Records</h2>
+      <p class="sub">The top five of each. Sizes only for PRs with size data, under <span id="h-bigpr2"></span> changed lines.</p>
+    </div>
+    <div class="grid3" id="records"></div>
+  </section>
+
   <div class="notes">
     <span class="pill">Method</span>
     <ul>
@@ -407,6 +424,14 @@ function compute() {
   const sized = merged.filter(p => p.size && p.size[0] + p.size[1] <= D.bigPr);
   const wkBest = weeks.reduce((a, w, i) => (wkMerge.get(w) || 0) > a[1] ? [w, wkMerge.get(w)] : a, [null, 0]);
   const afterHours = merged.filter(p => p.merged.wd >= 5 || p.merged.hour < 8 || p.merged.hour >= 18).length;
+  const top = (arr, key, lo = false) => [...arr].sort((a, b) => lo ? key(a) - key(b) : key(b) - key(a)).slice(0, 5);
+  const dayRepos = new Map(); merged.forEach(p => { const d = p.merged.date; (dayRepos.get(d) || dayRepos.set(d, new Set()).get(d)).add(p.r); });
+  const records = {
+    largest: top(sized, p => p.size[0] + p.size[1]), fastest: top(merged, hoursOf, true), longest: top(merged, hoursOf),
+    days: top([...mday.entries()], e => e[1]).map(([d, n]) => [d, n, [...dayRepos.get(d)]]),
+    weeks: top(weeks.map(w => [w, wkMerge.get(w) || 0]), e => e[1]).filter(e => e[1]),
+    months: top(months.map(m => [m, monPr.get(m) || 0]), e => e[1]).filter(e => e[1]),
+  };
   const hi = {
     fastest: pick(merged, hoursOf, true), longest: pick(merged, hoursOf, false),
     largest: pick(sized, p => p.size[0] + p.size[1], false),
@@ -419,7 +444,7 @@ function compute() {
     prPerDay: days.map(d => mday.get(d) || 0), issPerDay: days.map(d => iday.get(d) || 0),
     months, monPr: months.map(m => monPr.get(m) || 0), monIss: months.map(m => monIss.get(m) || 0),
     locAdd: months.map(m => locAdd.get(m) || 0), locDel: months.map(m => locDel.get(m) || 0),
-    locRepo, repoMix, heat, hourly, scatter, sizes, hi,
+    locRepo, repoMix, heat, hourly, scatter, sizes, hi, records,
     events: parseEvents(ST.events), weeks, wkOpen: weeks.map(w => wkOpen.get(w) || 0), wkMerge: weeks.map(w => wkMerge.get(w) || 0), wkOpenEnd,
     stats: {
       merged: merged.length, closed: prs.length, issues: issues.length,
@@ -513,12 +538,28 @@ function render() {
   const prRef = p => { const name = `${repoName(p.r)}#${p.n}`;
     return ST.anon ? name : `<a href="https://github.com/${D.repos[p.r]}/pull/${p.n}">${name}</a>`; };
   const H = R.hi, hl = [];
-  if (H.fastest) hl.push(`<b>Fastest merge</b> ${prRef(H.fastest)}, in ${dur(hoursOf(H.fastest))}.`);
-  if (H.longest) hl.push(`<b>Longest wait</b> ${prRef(H.longest)}, open for ${dur(hoursOf(H.longest))}.`);
-  if (H.week) hl.push(`<b>Busiest week</b> ${H.weekN} merges in the week of ${longDate(H.week).replace(/^\w+, /, '')}.`);
-  if (H.largest) hl.push(`<b>Largest PR</b> ${prRef(H.largest)}, ${fmt(H.largest.size[0] + H.largest.size[1])} lines across ${H.largest.size[2]} files.`);
+  const jump = (id, label) => `<b><a href="#rec-${id}" title="All five">${label}</a></b>`;
+  if (H.fastest) hl.push(`${jump('fastest', 'Fastest merge')} ${prRef(H.fastest)}, in ${dur(hoursOf(H.fastest))}.`);
+  if (H.longest) hl.push(`${jump('longest', 'Longest wait')} ${prRef(H.longest)}, open for ${dur(hoursOf(H.longest))}.`);
+  if (H.week) hl.push(`${jump('weeks', 'Busiest week')} ${H.weekN} merges in the week of ${shortDate(H.week)}.`);
+  if (H.largest) hl.push(`${jump('largest', 'Largest PR')} ${prRef(H.largest)}, ${fmt(H.largest.size[0] + H.largest.size[1])} lines across ${H.largest.size[2]} files.`);
   if (S.merged) hl.push(`<b>After hours</b> ${H.afterHours}% of merges landed before 8, after 18 or on a weekend.`);
   $('hl').innerHTML = hl.map(t => `<li>${t}</li>`).join('');
+
+  $('h-bigpr2').textContent = fmt(D.bigPr);
+  const rec = R.records, day = iso => `${+iso.slice(8)} ${MON[+iso.slice(5, 7) - 1]}`;
+  const lines = p => p.size ? fmt(p.size[0] + p.size[1]) : '—';
+  const durS = h => h < 1 ? `${Math.round(h * 60)} min` : h < 48 ? `${+h.toFixed(1)} h` : `${Math.round(h / 24)} d`;
+  const card = (id, title, head, rows, cls) => rows.length ? `<div class="card rec" id="rec-${id}"><h2>${title}</h2><table><thead><tr>${head.map((h, i) => `<th class="${cls[i]}">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td class="${cls[i]}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
+  const prCols = ['repo', 'num', 'num', 'num dim'];
+  $('records').innerHTML = [
+    card('largest', 'Largest PRs', ['PR', 'Lines', 'Files', 'Merged'], rec.largest.map(p => [prRef(p), lines(p), p.size[2], day(p.merged.date)]), prCols),
+    card('fastest', 'Fastest merges', ['PR', 'Wait', 'Lines', 'Merged'], rec.fastest.map(p => [prRef(p), durS(hoursOf(p)), lines(p), day(p.merged.date)]), prCols),
+    card('longest', 'Longest waits', ['PR', 'Wait', 'Lines', 'Merged'], rec.longest.map(p => [prRef(p), durS(hoursOf(p)), lines(p), day(p.merged.date)]), prCols),
+    card('days', 'Busiest days', ['Day', 'Merges', 'Repositories'], rec.days.map(([d, n, rs]) => [`${DAYS[wdOf(d)]} ${day(d)}`, n, rs.map(repoName).join(', ')]), ['repo', 'num', 'list']),
+    card('weeks', 'Busiest weeks', ['Week of', 'Merges'], rec.weeks.map(([w, n]) => [day(w), n]), ['repo', 'num']),
+    card('months', 'Busiest months', ['Month', 'Merges'], rec.months.map(([m, n]) => [MON[+m.slice(5) - 1] + ' ' + m.slice(0, 4), n]), ['repo', 'num']),
+  ].join('');
 
   $('m-src').textContent = `${fmt(S.closed)} closed, ${fmt(S.merged)} of them merged, a ${S.mergeRate}% merge rate`;
   $('m-biz').textContent = `${S.bizDays} business days = ${S.calDays} calendar days minus weekends, ${S.holidayDays} public holidays `
