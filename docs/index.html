@@ -65,6 +65,8 @@ section{display:flex;flex-direction:column;gap:16px}
 @media(min-width:860px){.grid2{grid-template-columns:1.35fr 1fr}}
 .chart{width:100%;display:block;overflow:visible}
 .scroller{overflow-x:auto}
+.fill{position:relative;flex:1;min-height:240px}
+.fill svg{position:absolute;inset:0;height:100%}
 .legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12.5px;color:var(--ink-2)}
 .legend span{display:inline-flex;align-items:center;gap:7px}
 .swatch{width:13px;height:9px;border-radius:1px;display:inline-block}
@@ -194,7 +196,7 @@ tr.pick.off td{opacity:.45}
     </div>
     <div class="grid2">
       <div class="card">
-        <div class="scroller"><svg class="chart" id="monthly" viewBox="0 0 640 320" role="img" aria-label="Monthly merged PRs and issues opened"></svg></div>
+        <div class="scroller fill"><svg class="chart" id="monthly" viewBox="0 0 640 320" role="img" aria-label="Monthly merged PRs and issues opened"></svg></div>
         <div class="legend">
           <span><i class="swatch" style="background:var(--accent)"></i>PRs merged</span>
           <span><i class="swatch" style="background:var(--amber)"></i>Issues opened</span>
@@ -602,7 +604,9 @@ function render() {
 
   /* monthly */
   (function () {
-    const svg = $('monthly'), W = 640, H = 320, L = 40, Rr = 8, T = 14, B = 40, w = W - L - Rr, h = H - T - B;
+    const svg = $('monthly'), box = svg.parentElement.getBoundingClientRect(), W = 640, L = 40, Rr = 8, T = 14, B = 40;
+    const H = Math.max(240, Math.round(W * box.height / (box.width || W))), w = W - L - Rr, h = H - T - B;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     const m = R.months.length, {step, max} = nice(Math.max(...R.monPr, ...R.monIss, 1));
     const slot = w / m, bw = Math.min(15, slot / 2.6), y = v => T + h - v / max * h;
     for (let g = 0; g <= max; g += step) {
@@ -734,6 +738,8 @@ function render() {
   $('btn-theme').addEventListener('click', () => { ST.theme = {auto: 'light', light: 'dark', dark: 'auto'}[ST.theme]; applyTheme(); save(); });
 })();
 render();
+let resizeTimer;
+addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150); });
 </script>
 </body>
 </html>
