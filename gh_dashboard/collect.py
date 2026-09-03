@@ -1,17 +1,16 @@
 """Fetch a rolling year of GitHub activity for one account into raw.json.
 
-Usage: python3 collect.py [--account NAME] [--end YYYY-MM-DD] [--days 366]
-                          [--public-only] [--exclude-repo GLOB ...] [--out raw.json]
+Usage: python3 -m gh_dashboard.collect [--account NAME] [--end YYYY-MM-DD] [--days 366]
+                                       [--public-only] [--exclude-repo GLOB ...] [--out raw.json]
 
 Uses the `gh` CLI and whatever account it is logged in as. Nothing is sent anywhere
 else; raw.json stays on disk and is git-ignored. With --public-only the search itself is
 restricted to public repositories, so private activity never reaches the disk.
 """
-import argparse, collections, datetime as dt, json, os, subprocess, sys, time
+import argparse, collections, datetime as dt, json, subprocess, sys, time
 
-from settings import add_repo_args, load_config, repo_filter
+from .settings import add_repo_args, load_config, repo_filter
 
-D = os.path.dirname(os.path.abspath(__file__))
 JQ = ('.items[] | [.number, .created_at, (.closed_at//""), (.pull_request.merged_at//""), '
       '(.repository_url|sub("https://api.github.com/repos/";""))] | @tsv')
 
@@ -52,15 +51,15 @@ def months(start, end):
     return out
 
 
-def main():
+def main(argv=None):
     cfg = load_config()
     ap = argparse.ArgumentParser()
     ap.add_argument("--account", default=cfg["account"])
     ap.add_argument("--end", default=dt.date.today().isoformat())
     ap.add_argument("--days", type=int, default=cfg["days"])
-    ap.add_argument("--out", default=f"{D}/raw.json")
+    ap.add_argument("--out", default="raw.json")
     add_repo_args(ap, cfg)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     if a.config:
         cfg = load_config(a.config)
     account = a.account or gh("api", "user", "--jq", ".login").strip()

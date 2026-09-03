@@ -24,7 +24,7 @@ def main():
             continue
         out[code] = {"name": re.sub(r"(?<=[a-z])(?=[A-Z])", " ", cls),
                      "dates": sorted(d.isoformat() for d in h)}
-    json.dump(out, open(f"{D}/holidays.json", "w"), separators=(",", ":"), sort_keys=True)
+    json.dump(out, open(f"{D}/gh_dashboard/holidays.json", "w"), separators=(",", ":"), sort_keys=True)
     print(f"{len(out)} countries, {sum(len(v['dates']) for v in out.values())} dates, "
           f"{a.y0}-{a.y1}")
 

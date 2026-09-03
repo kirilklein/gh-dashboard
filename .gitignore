@@ -3,7 +3,8 @@ __pycache__/
 /raw.json
 /data.json
 config.local.json
-dist/*
-!dist/index.html
+dist/
+*.egg-info/
 out/
 .claude/
+build/

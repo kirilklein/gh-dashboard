@@ -3,4 +3,4 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 python3 demo/generate.py
-python3 build.py --raw demo/raw.json --config demo/config.json --out dist/index.html
+python3 -m gh_dashboard.build --raw demo/raw.json --config demo/config.json --out docs/index.html
