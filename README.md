@@ -1,45 +1,56 @@
 # gh-dashboard
 
-A one-page, interactive dashboard of your last year on GitHub: merged PRs, cadence per business
-day, cumulative progress with your own annotations, PR size vs. time-to-merge, weekly flow,
-a weekday x hour heatmap in your timezone, the shape of an average working day, and lines moved.
+Your year on GitHub as one interactive page: merged PRs, cadence per business day, PR size vs.
+time-to-merge, a weekday x hour heatmap, the shape of an average working day, lines moved. Built
+locally from the `gh` CLI, nothing leaves your machine.
 
-**[Live demo](https://kirilklein.github.io/gh-dashboard/)** (synthetic account) · everything below runs locally.
+**[Live demo](https://kirilklein.github.io/gh-dashboard/)**
 
-Requirements: Python 3.9+ and the [`gh` CLI](https://cli.github.com/) logged in. No other dependencies.
+[![gh-dashboard demo](docs/screenshot.png)](https://kirilklein.github.io/gh-dashboard/)
+
+## One command
+
+```bash
+uvx --from git+https://github.com/kirilklein/gh-dashboard gh-dashboard
+```
+
+Needs Python 3.9+ and the [`gh` CLI](https://cli.github.com/) logged in. Nothing else.
+
+```
+GitHub account [octodev]:
+Days to cover [366]:
+Public repositories only (private activity never touches disk) [Y/n]:
+Repositories to exclude, comma-separated globs like acme/*:
+Timezone (IANA name) [Europe/Berlin]:
+Country code for public holidays [DE]:
+```
+
+Enter keeps every default. About five minutes later `out/index.html` opens in your browser. Then use
+**Settings** on the page for days off and events: every number recomputes instantly, nothing is
+rebuilt. `gh-dashboard --yes` skips the questions, `--no-open` skips the browser.
+
+Prefer a clone? `git clone https://github.com/kirilklein/gh-dashboard && cd gh-dashboard && ./refresh.sh`.
 
 ## Your data stays yours
 
-- Fetched data (`raw.json`), your settings (`config.local.json`) and your built page (`out/`) are
-  git-ignored. Nothing personal can end up in a fork by accident.
-- The page is a single self-contained HTML file. It makes no requests (fonts aside) and stores your
+- Fetched data (`raw.json`), your answers (`config.local.json`) and the built page (`out/`) are
+  written to the current directory and git-ignored. Nothing personal can end up in a fork by accident.
+- The page is one self-contained HTML file. It makes no requests (fonts aside) and stores your
   settings in your browser only.
 - Sharing is a separate, explicit step: send the file, or run `./publish.sh`, which asks before it
   pushes to a public `gh-pages` branch.
-- Want a shareable version without repository names? `--anonymize-repos`. Without private repos at
-  all? `--public-only` on `collect.py` keeps them off your disk in the first place.
+- A shareable version without repository names: `--anonymize-repos` on the build. Without private
+  repos at all: answer yes to *public only* and the search itself excludes them, so they never reach disk.
 
-## Quick start
-
-```bash
-git clone https://github.com/kirilklein/gh-dashboard && cd gh-dashboard
-./refresh.sh                 # ~5 min, paced under GitHub's search rate limit
-open out/index.html          # or xdg-open / start
-```
-
-Then open **Settings** on the page: pick your country for public holidays, your timezone, paste
-your days off, add a few events. Every number recomputes instantly; nothing is rebuilt.
-
-### Options
+## More control
 
 ```bash
-./refresh.sh --account someone-else --end 2026-06-30 --days 180
-python3 collect.py --public-only                       # never fetch private-repo activity
-python3 collect.py --exclude-repo 'acme/*' --exclude-repo octodev/dotfiles
-python3 build.py --out out/index.html --anonymize-repos # repo-1, repo-2, ... for sharing
+python3 -m gh_dashboard.collect --account someone-else --end 2026-06-30 --days 180
+python3 -m gh_dashboard.collect --exclude-repo 'acme/*' --exclude-repo octodev/dotfiles
+python3 -m gh_dashboard.build --out out/index.html --anonymize-repos
 ```
 
-Persistent defaults go in `config.local.json` (ignored by git; same keys as `config.json`):
+Persistent defaults live in `config.local.json` (same keys as `gh_dashboard/config.json`):
 
 ```json
 {"timezone": "Europe/Berlin", "country": "DE", "public_only": true,
@@ -48,12 +59,11 @@ Persistent defaults go in `config.local.json` (ignored by git; same keys as `con
 
 ## Using a coding agent
 
-The repo is small and documented for agents (`AGENTS.md`). Things that work well as one-line asks:
+The repo is small and documented for agents (`AGENTS.md`). One-line asks that work well:
 
-- "Run `./refresh.sh` and open the result."
+- "Run `gh-dashboard` and open the result."
 - "Add my vacation from 6 to 24 July to the config and rebuild."
 - "Add a chart of merges per repository per month."
-- "Change the accent colour to blue."
 - "Build a version without repo names and publish it to gh-pages."
 
 ## How it works
@@ -73,9 +83,7 @@ Conventions:
 - **Issues** are counted by creation date: issues *opened* by the account.
 - **Timestamps** are converted to the chosen timezone in the browser, DST-aware.
 
-## Demo
-
-`./demo.sh` regenerates `dist/index.html` from `demo/raw.json`, a deterministic synthetic year for
-a fictional `octodev`. That is the only built page tracked in git.
+The demo is a deterministic synthetic year for a fictional `octodev`; `./demo.sh` regenerates it into
+`docs/index.html`, the only built page tracked in git.
 
 MIT licensed.

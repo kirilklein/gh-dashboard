@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gh-dashboard"
+version = "0.1.0"
+description = "A privacy-first, interactive one-page dashboard of your year on GitHub"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = []
+keywords = ["github", "dashboard", "pull-requests", "developer-productivity", "year-in-review"]
+classifiers = [
+  "Environment :: Console",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development",
+]
+
+[project.urls]
+Homepage = "https://github.com/kirilklein/gh-dashboard"
+Demo = "https://kirilklein.github.io/gh-dashboard/"
+
+[project.scripts]
+gh-dashboard = "gh_dashboard.cli:main"
+
+[tool.setuptools]
+packages = ["gh_dashboard"]
+
+[tool.setuptools.package-data]
+gh_dashboard = ["template.html", "holidays.json", "config.json"]
