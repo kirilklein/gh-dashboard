@@ -177,15 +177,11 @@ tr.pick.off td{opacity:.45}
 
   <section>
     <div>
-      <h2>Opened vs. merged, weekly</h2>
-      <p class="sub">PRs opened and PRs merged per ISO week. The lines tracking each other means nothing queues up.</p>
+      <h2>Open PRs, week by week</h2>
+      <p class="sub">PRs opened but not yet closed at the end of each week. A flat line near zero means nothing queues up. PRs still open today are not in the data.</p>
     </div>
     <div class="card">
-      <div class="legend">
-        <span><i class="swatch" style="background:var(--amber)"></i>Opened</span>
-        <span><i class="swatch" style="background:var(--accent)"></i>Merged</span>
-      </div>
-      <div class="scroller"><svg class="chart" id="flow" viewBox="0 0 900 240" role="img" aria-label="PRs opened versus merged per week"></svg></div>
+      <div class="scroller"><svg class="chart" id="flow" viewBox="0 0 900 240" role="img" aria-label="Open PRs at the end of each week"></svg></div>
     </div>
   </section>
 
@@ -343,8 +339,8 @@ function compute() {
   const isBiz = d => wdOf(d) < 5 && !hol.has(d);
   const biz = days.filter(isBiz);
 
-  const all = D.prs.map(([c, cl, m, r, size]) => ({c, cl, m, r, size, merged: m ? loc(m) : null, created: loc(c)}))
-    .filter(p => p.cl && dayIdx.has(loc(p.cl).date));
+  const all = D.prs.map(([c, cl, m, r, size]) => ({c, cl, m, r, size, merged: m ? loc(m) : null, created: loc(c), closed: cl ? loc(cl) : null}))
+    .filter(p => p.closed && dayIdx.has(p.closed.date));
   const prs = all.filter(p => repoSel === null || p.r === repoSel);
   const merged = prs.filter(p => p.merged);
   const issues = D.issues.map(loc).filter(t => dayIdx.has(t.date));
@@ -388,7 +384,8 @@ function compute() {
   const wk = iso => addDays(iso, -wdOf(iso));
   const wkOpen = count(prs.filter(p => dayIdx.has(p.created.date)), p => wk(p.created.date));
   const wkMerge = count(merged, p => wk(p.merged.date));
-  const weeks = [...new Set([...wkOpen.keys(), ...wkMerge.keys()])].sort();
+  const weeks = []; for (let w = wk(days[0]); w <= days[days.length - 1]; w = addDays(w, 7)) weeks.push(w);
+  const wkOpenEnd = weeks.map(w => { const e = addDays(w, 6); return prs.filter(p => p.created.date <= e && p.closed.date > e).length; });
 
   const ttm = merged.map(p => (new Date(p.m) - new Date(p.c)) / 36e5).sort((a, b) => a - b);
   const q = (a, p) => a.length ? +a[Math.floor(p * (a.length - 1))].toFixed(1) : 0;
@@ -402,7 +399,7 @@ function compute() {
     months, monPr: months.map(m => monPr.get(m) || 0), monIss: months.map(m => monIss.get(m) || 0),
     locAdd: months.map(m => locAdd.get(m) || 0), locDel: months.map(m => locDel.get(m) || 0),
     locRepo, repoMix, heat, hourly, scatter, sizes,
-    events: parseEvents(ST.events), weeks, wkOpen: weeks.map(w => wkOpen.get(w) || 0), wkMerge: weeks.map(w => wkMerge.get(w) || 0),
+    events: parseEvents(ST.events), weeks, wkOpen: weeks.map(w => wkOpen.get(w) || 0), wkMerge: weeks.map(w => wkMerge.get(w) || 0), wkOpenEnd,
     stats: {
       merged: merged.length, closed: prs.length, issues: issues.length,
       bizDays: biz.length, calDays: days.length, activeDays: mday.size,
@@ -584,22 +581,21 @@ function render() {
   (function () {
     const svg = $('flow'), W = 900, H = 240, L = 40, Rr = 14, T = 16, B = 34, w = W - L - Rr, h = H - T - B;
     const n = R.weeks.length; if (n < 2) return;
-    const {step, max} = nice(Math.max(...R.wkOpen, ...R.wkMerge, 1));
+    const nn = nice(Math.max(...R.wkOpenEnd, 1)), step = Math.max(1, nn.step), max = Math.max(1, nn.max);
     const x = i => L + i / (n - 1) * w, y = v => T + h - v / max * h;
     for (let g = 0; g <= max; g += step) {
       svg.appendChild(svgEl('line', {x1: L, x2: W - Rr, y1: y(g), y2: y(g), class: 'gridline'}));
       svg.appendChild(svgEl('text', {x: L - 8, y: y(g) + 3.5, class: 'axis', 'text-anchor': 'end'})).textContent = g;
     }
     const path = a => a.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
-    svg.appendChild(svgEl('path', {d: path(R.wkMerge) + `L${x(n - 1)},${y(0)}L${x(0)},${y(0)}Z`, fill: 'var(--accent-soft)'}));
-    svg.appendChild(svgEl('path', {d: path(R.wkMerge), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-linejoin': 'round'}));
-    svg.appendChild(svgEl('path', {d: path(R.wkOpen), fill: 'none', stroke: 'var(--amber)', 'stroke-width': 1.6, 'stroke-dasharray': '4 3', 'stroke-linejoin': 'round'}));
+    svg.appendChild(svgEl('path', {d: path(R.wkOpenEnd) + `L${x(n - 1)},${y(0)}L${x(0)},${y(0)}Z`, fill: 'var(--accent-soft)'}));
+    svg.appendChild(svgEl('path', {d: path(R.wkOpenEnd), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-linejoin': 'round'}));
     svg.appendChild(svgEl('line', {x1: L, x2: W - Rr, y1: y(0), y2: y(0), class: 'baseline'}));
     R.weeks.forEach((d, i) => { if (d.slice(8) <= '07' && (i === 0 || R.weeks[i - 1].slice(5, 7) !== d.slice(5, 7))) {
       const [Y, M] = d.split('-');
       svg.appendChild(svgEl('text', {x: x(i), y: H - 12, class: 'axis', 'text-anchor': 'middle'})).textContent = MON[+M - 1] + (M === '01' ? " '" + Y.slice(2) : '');
     }});
-    hoverColumns(svg, n, L, w, T, h, i => `week of ${longDate(R.weeks[i])}\nopened ${R.wkOpen[i]} · merged ${R.wkMerge[i]}`);
+    hoverColumns(svg, n, L, w, T, h, i => `week of ${longDate(R.weeks[i])}\n${R.wkOpenEnd[i]} open at week end · opened ${R.wkOpen[i]} · merged ${R.wkMerge[i]}`);
   })();
 
   /* monthly */
