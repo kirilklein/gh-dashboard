@@ -38,7 +38,7 @@ def main(argv=None):
             repos.append(repo)
         l = loc.get((repo, int(num)))
         size = [l["additions"], l["deletions"], l["changedFiles"]] if l else None
-        prs.append([created, closed, merged, repos.index(repo), size])
+        prs.append([created, closed, merged, repos.index(repo), size, int(num)])
     loc_idx = [repos.index(r) for r in raw["loc"] if r in repos]
     if a.anonymize_repos:
         repos = [f"repo-{i + 1}" for i in range(len(repos))]
