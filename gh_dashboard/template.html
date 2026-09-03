@@ -55,6 +55,11 @@ section{display:flex;flex-direction:column;gap:16px}
 .rail{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden;
   grid-template-columns:repeat(2,1fr);box-shadow:var(--shadow)}
 @media(min-width:860px){.rail{grid-template-columns:repeat(4,1fr)}}
+.hl{display:grid;gap:10px 32px;grid-template-columns:1fr;margin:-6px 0 0;padding:0;list-style:none;font-size:14.5px;color:var(--ink-2)}
+@media(min-width:860px){.hl{grid-template-columns:1fr 1fr}}
+.hl li{padding-left:14px;border-left:2px solid var(--accent)}
+.hl b{color:var(--ink);font-weight:600}
+.hl a{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .tile{background:var(--surface);padding:16px 18px 18px;display:flex;flex-direction:column;gap:3px}
 .tile .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
 .tile .v{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:30px;
@@ -135,6 +140,7 @@ tr.pick.off td{opacity:.45}
   </header>
 
   <div class="rail" id="rail"></div>
+  <ul class="hl" id="hl"></ul>
 
   <section>
     <div>
@@ -344,7 +350,7 @@ function compute() {
   const isBiz = d => wdOf(d) < 5 && !hol.has(d);
   const biz = days.filter(isBiz);
 
-  const all = D.prs.map(([c, cl, m, r, size]) => ({c, cl, m, r, size, merged: m ? loc(m) : null, created: loc(c), closed: cl ? loc(cl) : null}))
+  const all = D.prs.map(([c, cl, m, r, size, n]) => ({c, cl, m, r, size, n, merged: m ? loc(m) : null, created: loc(c), closed: cl ? loc(cl) : null}))
     .filter(p => p.closed && dayIdx.has(p.closed.date));
   const prs = all.filter(p => repoSel === null || p.r === repoSel);
   const merged = prs.filter(p => p.merged);
@@ -397,13 +403,23 @@ function compute() {
   const busiest = [...mday.entries()].sort((a, b) => b[1] - a[1])[0] || [null, 0];
   const repoMix = [...count(all.filter(p => p.merged), p => p.r).entries()].sort((a, b) => b[1] - a[1]);
   const offDays = days.filter(d => wdOf(d) < 5 && off.has(d));
+  const pick = (arr, key, lo) => arr.reduce((a, p) => !a || (lo ? key(p) < key(a) : key(p) > key(a)) ? p : a, null);
+  const sized = merged.filter(p => p.size && p.size[0] + p.size[1] <= D.bigPr);
+  const wkBest = weeks.reduce((a, w, i) => (wkMerge.get(w) || 0) > a[1] ? [w, wkMerge.get(w)] : a, [null, 0]);
+  const afterHours = merged.filter(p => p.merged.wd >= 5 || p.merged.hour < 8 || p.merged.hour >= 18).length;
+  const hi = {
+    fastest: pick(merged, hoursOf, true), longest: pick(merged, hoursOf, false),
+    largest: pick(sized, p => p.size[0] + p.size[1], false),
+    week: wkBest[0], weekN: wkBest[1],
+    afterHours: merged.length ? Math.round(100 * afterHours / merged.length) : 0,
+  };
 
   return {
     days, cum, rollPr: rolling(mday), rollIss: rolling(iday),
     prPerDay: days.map(d => mday.get(d) || 0), issPerDay: days.map(d => iday.get(d) || 0),
     months, monPr: months.map(m => monPr.get(m) || 0), monIss: months.map(m => monIss.get(m) || 0),
     locAdd: months.map(m => locAdd.get(m) || 0), locDel: months.map(m => locDel.get(m) || 0),
-    locRepo, repoMix, heat, hourly, scatter, sizes,
+    locRepo, repoMix, heat, hourly, scatter, sizes, hi,
     events: parseEvents(ST.events), weeks, wkOpen: weeks.map(w => wkOpen.get(w) || 0), wkMerge: weeks.map(w => wkMerge.get(w) || 0), wkOpenEnd,
     stats: {
       merged: merged.length, closed: prs.length, issues: issues.length,
@@ -426,6 +442,7 @@ function compute() {
 }
 
 /* ---------- helpers ---------- */
+const hoursOf = p => (new Date(p.m) - new Date(p.c)) / 36e5;
 const repoName = i => ST.anon ? `repo-${i + 1}` : D.repos[i];
 function nice(max, target = 4) {
   if (max <= 0) return {step: 1, max: 1};
@@ -491,6 +508,17 @@ function render() {
   ];
   $('rail').innerHTML = tiles.map(t =>
     `<div class="tile${t.hi ? ' hi' : ''}"><span class="k">${t.k}</span><span class="v">${t.v}</span><span class="n">${t.n}</span></div>`).join('');
+
+  const dur = h => h < 1 ? `${Math.round(h * 60)} minutes` : h < 48 ? `${+h.toFixed(1)} hours` : `${Math.round(h / 24)} days`;
+  const prRef = p => { const name = `${repoName(p.r)}#${p.n}`;
+    return ST.anon ? name : `<a href="https://github.com/${D.repos[p.r]}/pull/${p.n}">${name}</a>`; };
+  const H = R.hi, hl = [];
+  if (H.fastest) hl.push(`<b>Fastest merge</b> ${prRef(H.fastest)}, in ${dur(hoursOf(H.fastest))}.`);
+  if (H.longest) hl.push(`<b>Longest wait</b> ${prRef(H.longest)}, open for ${dur(hoursOf(H.longest))}.`);
+  if (H.week) hl.push(`<b>Busiest week</b> ${H.weekN} merges in the week of ${longDate(H.week).replace(/^\w+, /, '')}.`);
+  if (H.largest) hl.push(`<b>Largest PR</b> ${prRef(H.largest)}, ${fmt(H.largest.size[0] + H.largest.size[1])} lines across ${H.largest.size[2]} files.`);
+  if (S.merged) hl.push(`<b>After hours</b> ${H.afterHours}% of merges landed before 8, after 18 or on a weekend.`);
+  $('hl').innerHTML = hl.map(t => `<li>${t}</li>`).join('');
 
   $('m-src').textContent = `${fmt(S.closed)} closed, ${fmt(S.merged)} of them merged, a ${S.mergeRate}% merge rate`;
   $('m-biz').textContent = `${S.bizDays} business days = ${S.calDays} calendar days minus weekends, ${S.holidayDays} public holidays `
