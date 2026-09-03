@@ -1,4 +1,4 @@
-"""config.json (tracked defaults) overlaid with config.local.json (git-ignored, personal)."""
+"""Packaged config.json defaults overlaid with ./config.local.json (git-ignored, personal)."""
 import fnmatch, json, os
 
 D = os.path.dirname(os.path.abspath(__file__))
@@ -6,7 +6,7 @@ D = os.path.dirname(os.path.abspath(__file__))
 
 def load_config(override=None):
     cfg = json.load(open(f"{D}/config.json"))
-    local = override or f"{D}/config.local.json"
+    local = override or "config.local.json"
     if os.path.exists(local):
         cfg.update(json.load(open(local)))
     return cfg

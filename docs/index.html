@@ -650,7 +650,7 @@ function render() {
 
   /* working day */
   (function () {
-    const svg = $('workday'), W = 900, H = 260, L = 44, Rr = 14, T = 30, B = 34, w = W - L - Rr, h = H - T - B;
+    const svg = $('workday'), W = 900, H = 260, L = 44, Rr = 14, T = 44, B = 34, w = W - L - Rr, h = H - T - B;
     const vals = R.hourly, {step, max} = nice(Math.max(...vals, 0.1)), slot = w / 24, bw = slot * 0.62;
     const x = hh => L + slot * hh, y = v => T + h - v / max * h;
     for (let g = step; g <= max + 1e-9; g += step) {
@@ -663,12 +663,12 @@ function render() {
     svg.appendChild(svgEl('line', {x1: L, x2: W - Rr, y1: y(0), y2: y(0), class: 'baseline'}));
     for (let hh = 0; hh < 24; hh += 3) svg.appendChild(svgEl('text', {x: x(hh) + slot / 2, y: H - 12, class: 'axis', 'text-anchor': 'middle'})).textContent = String(hh).padStart(2, '0');
     const hm = t => `${String(Math.floor(t)).padStart(2, '0')}:${String(Math.round(t % 1 * 60)).padStart(2, '0')}`;
-    if (S.activeBizDays) [[S.firstMedian, 'median first'], [S.lastMedian, 'median last']].forEach(([t, lab]) => {
+    if (S.activeBizDays) [[S.firstMedian, 'median first', 'end', -5], [S.lastMedian, 'median last', 'start', 5]].forEach(([t, lab, anchor, dx]) => {
       const px = L + slot * t + slot / 2;
       svg.appendChild(svgEl('line', {x1: px, x2: px, y1: T - 4, y2: y(0), stroke: 'var(--amber)', 'stroke-width': 1.4, 'stroke-dasharray': '3 3'}));
-      svg.appendChild(svgEl('text', {x: px, y: T - 10, class: 'axis', 'text-anchor': 'middle', style: 'fill:var(--amber);font-size:11px'})).textContent = `${lab} ${hm(t)}`;
+      svg.appendChild(svgEl('text', {x: px + dx, y: T - 8, class: 'axis', 'text-anchor': anchor, style: 'fill:var(--amber);font-size:11px'})).textContent = `${lab} ${hm(t)}`;
     });
-    svg.appendChild(svgEl('text', {x: W - Rr, y: T - 10, class: 'axis', 'text-anchor': 'end', style: 'font-size:11.5px'})).textContent = `median span ${S.spanMedian}h · ${S.activeBizDays} active business days`;
+    svg.appendChild(svgEl('text', {x: W - Rr, y: T - 26, class: 'axis', 'text-anchor': 'end', style: 'font-size:11.5px'})).textContent = `median span ${S.spanMedian}h · ${S.activeBizDays} active business days`;
   })();
 
   /* LOC */
