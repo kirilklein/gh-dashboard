@@ -675,17 +675,18 @@ function render() {
 
   /* LOC */
   (function () {
-    const svg = $('loc'), W = 900, H = 300, L = 56, Rr = 12, T = 16, B = 44, w = W - L - Rr, h = H - T - B;
+    const svg = $('loc'), W = 900, H = 300, L = 56, Rr = 12, T = 30, B = 44, w = W - L - Rr, h = H - T - B;
     const m = R.months.length, slot = w / m, bw = Math.min(30, slot * 0.5);
-    const maxA = Math.max(...R.locAdd, 1), maxD = Math.max(...R.locDel, 1), tot = maxA + maxD, zero = T + h * (maxA / tot);
+    const nA = nice(Math.max(...R.locAdd, 1), 4), nD = nice(Math.max(...R.locDel, 1), 3);
+    const maxA = nA.max, maxD = nD.max, tot = maxA + maxD, zero = T + h * (maxA / tot);
     const sc = v => v / tot * h, k = v => v >= 1000 ? (v / 1000) + 'k' : String(v);
     svg.appendChild(svgEl('line', {x1: L, x2: W - Rr, y1: zero, y2: zero, class: 'baseline'}));
-    const stepA = nice(maxA, 3).step, stepD = nice(maxD, 2).step;
-    for (let g = stepA; g <= maxA; g += stepA) {
+    const stepA = nA.step, stepD = nD.step;
+    for (let g = stepA; g <= maxA + 1e-9; g += stepA) {
       svg.appendChild(svgEl('line', {x1: L, x2: W - Rr, y1: zero - sc(g), y2: zero - sc(g), class: 'gridline'}));
       svg.appendChild(svgEl('text', {x: L - 9, y: zero - sc(g) + 3.5, class: 'axis', 'text-anchor': 'end'})).textContent = k(g);
     }
-    for (let g = stepD; g <= maxD; g += stepD) {
+    for (let g = stepD; g <= maxD + 1e-9; g += stepD) {
       svg.appendChild(svgEl('line', {x1: L, x2: W - Rr, y1: zero + sc(g), y2: zero + sc(g), class: 'gridline'}));
       svg.appendChild(svgEl('text', {x: L - 9, y: zero + sc(g) + 3.5, class: 'axis', 'text-anchor': 'end'})).textContent = '−' + k(g);
     }
@@ -696,7 +697,7 @@ function render() {
       svg.appendChild(svgEl('text', {x: cx, y: H - 24, class: 'axis', 'text-anchor': 'middle'})).textContent = MON[+M - 1];
       if (M === '01' || i === 0) svg.appendChild(svgEl('text', {x: cx, y: H - 11, class: 'axis', 'text-anchor': 'middle'})).textContent = "'" + Y.slice(2);
     });
-    svg.appendChild(svgEl('text', {x: W - Rr, y: T + 10, class: 'axis', 'text-anchor': 'end', style: 'font-size:11.5px'}))
+    svg.appendChild(svgEl('text', {x: W - Rr, y: T - 12, class: 'axis', 'text-anchor': 'end', style: 'font-size:11.5px'}))
       .textContent = `+${fmt(S.locAddTot)} / −${fmt(S.locDelTot)} across ${fmt(S.locPrCount)} PRs · median PR ${S.locMedian} lines`;
     document.querySelector('#locrepos tbody').innerHTML = [...R.locRepo.entries()].sort((a, b) => b[1].add - a[1].add).map(([r, v]) =>
       `<tr><td class="repo">${repoName(r)}</td><td class="num" style="color:var(--accent)">+${fmt(v.add)}</td><td class="num" style="color:var(--clay)">−${fmt(v.del)}</td></tr>`).join('');
