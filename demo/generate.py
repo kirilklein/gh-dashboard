@@ -49,7 +49,7 @@ def main():
         for _ in range(n):
             repo = rnd.choices(list(REPOS), weights=list(REPOS.values()))[0]
             merged = work_time(day)
-            wait_h = rnd.lognormvariate(1.2, 1.3)
+            wait_h = rnd.lognormvariate(4.6, 0.9) if rnd.random() < 0.12 else rnd.lognormvariate(1.2, 1.3)
             created = merged - dt.timedelta(hours=wait_h)
             if not (start <= merged.date() <= end):
                 continue
