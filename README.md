@@ -1,8 +1,8 @@
 # gh-dashboard
 
-Your year on GitHub as one interactive page: merged PRs, cadence per business day, PR size vs.
-time-to-merge, a weekday x hour heatmap, the shape of an average working day, lines moved. Built
-locally from the `gh` CLI, nothing leaves your machine.
+Your GitHub activity, in focus. A local report with an overview of what landed, period comparisons,
+and an Explore view for backlog, PR sizes, merge timing, and records. Built from the `gh` CLI;
+your activity stays on your machine.
 
 **[Live demo](https://kirilklein.github.io/gh-dashboard/)**
 
@@ -31,6 +31,17 @@ Enter keeps every default. About five minutes later `out/index.html` opens in yo
 rebuilt. `gh-dashboard --yes` skips the questions, `--no-open` skips the browser.
 
 Prefer a clone? `git clone https://github.com/kirilklein/gh-dashboard && cd gh-dashboard && ./refresh.sh`.
+
+## Explore your report
+
+- **Overview:** four headline metrics, trailing cadence, monthly activity, repository search, and highlights.
+- **Explore:** cumulative progress, historical backlog, size vs. wait, merge timing, lines moved, and expandable top-five records.
+- **Filters:** choose 30 days, 90 days, or the full collected range, or enter your own dates. Repository selection applies to both PRs and issues. The repository table remains an overview so you can switch between repositories.
+- **Comparisons:** equal-length preceding periods, only when both fit inside the collected data. Counts and business-day rates appear together.
+- **Settings:** timezone, country holidays, time off, events, and hiding repository names for screenshots. Light, dark, and automatic themes are supported.
+
+Older `raw.json` files still build, but the backlog chart asks you to collect again because those
+snapshots did not include open PRs. A saved report is a snapshot, not a live inbox.
 
 ## Your data stays yours
 
@@ -69,8 +80,10 @@ The repo is small and documented for agents (`AGENTS.md`). One-line asks that wo
 
 ## How it works
 
-`collect.py` uses `gh api search/issues` month by month (PRs closed and issues opened by the
-account) plus `gh pr list` on the busiest repositories for additions/deletions. `build.py` inlines
+`collect.py` uses `gh api search/issues` for authored PRs overlapping the period, including still-open
+PRs and PRs closed after the selected end date, and for issues opened in the period. Dense date
+ranges are split to respect GitHub's search cap; incomplete results stop collection rather than
+produce a partial report. `gh pr list` supplies sizes for the busiest repositories. `build.py` inlines
 those rows, your defaults and a bundled public-holiday table (250 countries, via the
 [`holidays`](https://github.com/vacanza/holidays) package at generation time) into `template.html`.
 All aggregation happens in the page, in plain JavaScript with inline SVG charts.
@@ -79,10 +92,27 @@ Conventions:
 
 - **Business days** exclude weekends, the chosen country's public holidays and your days off. An
   unlisted day off inflates the denominator, so the per-business-day rate is a floor.
-- **Lines of code** count only PRs under `big_pr` (10,000) changed lines; bigger ones are almost
-  always generated or vendored bulk that swamps the signal.
+- **Lines of code** count only PRs at or below `big_pr` (10,000) changed lines. Size coverage is
+  reported explicitly; the threshold does not determine whether code is generated or vendored.
 - **Issues** are counted by creation date: issues *opened* by the account.
 - **Timestamps** are converted to the chosen timezone in the browser, DST-aware.
+- **Backlog** uses creation and closure timestamps, including PRs closed after the selected window.
+  The final partial week ends at the selected date. Reopen cycles are not reconstructed.
+- **Merge timing** describes when PRs landed, including merges performed by maintainers. It does
+  not measure the author's working hours or impact.
+
+## Development checks
+
+```bash
+./demo.sh
+python3 -m py_compile gh_dashboard/*.py demo/*.py tools/*.py
+python3 -m unittest discover -s tests -v
+node --test tests/metrics.cjs
+uvx --from . gh-dashboard --help
+```
+
+Node is needed only for the aggregation tests, not to build or view a report. In a browser, check
+both views, the date and repository filters, records, settings, and mobile layout.
 
 The demo is a deterministic synthetic year for a fictional `octodev`; `./demo.sh` regenerates it into
 `docs/index.html`, the only built page tracked in git.
