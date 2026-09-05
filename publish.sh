@@ -12,7 +12,7 @@ tmp=$(mktemp -d)
 cp out/index.html "$tmp/index.html"
 git -C "$tmp" init -q -b gh-pages
 git -C "$tmp" add index.html
-git -C "$tmp" -c user.name=gh-dashboard -c user.email=gh-dashboard@localhost commit -q -m "publish dashboard"
+git -C "$tmp" -c user.name=mergeprint -c user.email=mergeprint@localhost commit -q -m "publish dashboard"
 git -C "$tmp" push -f "$remote" gh-pages
 rm -rf "$tmp"
 echo "Pushed. Enable Pages (branch gh-pages) in the repo settings if you haven't."

@@ -13,6 +13,6 @@ jobs:
           node-version: '22'
       - run: python -m unittest discover -s tests -v
       - run: node --test tests/metrics.cjs
-      - run: python -m py_compile gh_dashboard/*.py demo/*.py tools/*.py
+      - run: python -m py_compile mergeprint/*.py demo/*.py tools/*.py
       - run: ./demo.sh
       - run: git diff --exit-code -- docs/index.html demo/raw.json

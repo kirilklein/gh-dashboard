@@ -1,6 +1,6 @@
 """One command: a few questions (Enter keeps the default), then fetch, build and open.
 
-Usage: gh-dashboard [--yes] [--no-open]
+Usage: mergeprint [--yes] [--no-open]
 Files land in the current directory: raw.json, config.local.json, out/index.html.
 Timezone, country, days off and events can also be changed later inside the page.
 """
@@ -62,7 +62,7 @@ def main(argv=None):
         "country": cfg["country"] or system_country(),
     }
     if not a.yes:
-        print("gh-dashboard: Enter keeps the default in brackets.\n")
+        print("mergeprint: Enter keeps the default in brackets.\n")
         answers["account"] = ask("GitHub account", answers["account"])
         answers["days"] = int(ask("Days to cover", str(answers["days"])))
         answers["public_only"] = yes_no("Public repositories only (private activity never touches disk)",

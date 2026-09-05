@@ -4,7 +4,7 @@ const { resolve } = require('node:path');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const template = readFileSync(resolve(__dirname, '../gh_dashboard/template.html'), 'utf8');
+const template = readFileSync(resolve(__dirname, '../mergeprint/template.html'), 'utf8');
 const source = template.split('<script>')[1].split('const tipEl =')[0];
 const fixture = {
   account: 'fixture', start: '2026-01-01', end: '2026-01-31', bigPr: 10000, backlogComplete: true,

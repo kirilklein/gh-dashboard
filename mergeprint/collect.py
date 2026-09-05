@@ -1,6 +1,6 @@
 """Fetch a rolling year of GitHub activity for one account into raw.json.
 
-Usage: python3 -m gh_dashboard.collect [--account NAME] [--end YYYY-MM-
+Usage: python3 -m mergeprint.collect [--account NAME] [--end YYYY-MM-
 DD] [--days 366]
                                        [--public-only] [--exclude-repo
 GLOB ...] [--out raw.json]
