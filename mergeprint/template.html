@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>__ACCOUNT__ · GitHub in focus</title>
+<title>__ACCOUNT__ · Mergeprint</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
@@ -183,7 +183,7 @@ section{scroll-margin-top:24px}.notice{font-size:12px;color:var(--ink-2);backgro
 <a class="skip-link" href="#main">Skip to report</a>
 <div class="app-shell">
   <aside class="sidebar">
-    <a class="brand" href="#"><span class="brand-mark">g<span>.</span></span><span>gh-dashboard<small>A little perspective.</small></span></a>
+    <a class="brand" href="#"><span class="brand-mark">m<span>.</span></span><span>Mergeprint<small>See what you actually shipped.</small></span></a>
     <div class="side-label">YOUR REPORT</div>
     <nav aria-label="Report views">
       <button class="nav-item active" data-view="overview" aria-current="page"><span aria-hidden="true">◫</span> Overview</button>
@@ -338,7 +338,7 @@ section{scroll-margin-top:24px}.notice{font-size:12px;color:var(--ink-2);backgro
       <li><b>Privacy.</b> This page is self-contained. Settings live in this browser only. Activity is not sent anywhere; fonts load from Google Fonts.</li>
     </ul>
     </details>
-    <footer class="report-footer"><span>Made with gh-dashboard</span><span>Activity is a signal. It is not a measure of impact.</span></footer>
+    <footer class="report-footer"><span>Made with Mergeprint</span><span>Activity is a signal. It is not a measure of impact.</span></footer>
   </main>
 </div>
 <dialog class="panel" id="panel" aria-labelledby="settings-title">
@@ -382,7 +382,7 @@ const DEF = {
   events: D.settings.events.map(e => e.join(' ')).join('\n'), anon: D.anonymized, theme: 'auto',
   from: D.start, to: D.end,
 };
-const KEY = 'gh-dashboard:' + D.account;
+const KEY = 'mergeprint:' + D.account;
 let ST = {...DEF};
 try { Object.assign(ST, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
 if (D.anonymized) ST.anon = true;

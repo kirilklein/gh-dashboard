@@ -1,21 +1,22 @@
-# gh-dashboard
+# Mergeprint
 
-Your GitHub activity, in focus. A local report with an overview of what landed, period comparisons,
-and an Explore view for backlog, PR sizes, merge timing, and records. Built from the `gh` CLI;
-your activity stays on your machine.
+**See what you actually shipped.** PR throughput, backlog, merge time, sizes and period-over-period
+trends, built locally from the `gh` CLI. The contribution graph says you were busy; this says what landed.
 
-**[Live demo](https://kirilklein.github.io/gh-dashboard/)**
+`local-first` · `private repos supported` · `one self-contained HTML report`
 
-[![gh-dashboard demo](https://raw.githubusercontent.com/kirilklein/gh-dashboard/main/docs/screenshot.png)](https://kirilklein.github.io/gh-dashboard/)
+**[Live demo](https://kirilklein.github.io/mergeprint/)**
+
+[![Mergeprint demo](https://raw.githubusercontent.com/kirilklein/mergeprint/main/docs/screenshot.png)](https://kirilklein.github.io/mergeprint/)
 
 ## One command
 
 ```bash
-uvx gh-dashboard        # or: pipx run gh-dashboard
+uvx mergeprint        # or: pipx run mergeprint
 ```
 
 Needs Python 3.9+ and the [`gh` CLI](https://cli.github.com/) logged in. Nothing else.
-Bleeding edge: `uvx --from git+https://github.com/kirilklein/gh-dashboard gh-dashboard`.
+Bleeding edge: `uvx --from git+https://github.com/kirilklein/mergeprint mergeprint`.
 
 ```
 GitHub account [octodev]:
@@ -28,9 +29,9 @@ Country code for public holidays [DE]:
 
 Enter keeps every default. About five minutes later `out/index.html` opens in your browser. Then use
 **Settings** on the page for days off and events: every number recomputes instantly, nothing is
-rebuilt. `gh-dashboard --yes` skips the questions, `--no-open` skips the browser.
+rebuilt. `mergeprint --yes` skips the questions, `--no-open` skips the browser.
 
-Prefer a clone? `git clone https://github.com/kirilklein/gh-dashboard && cd gh-dashboard && ./refresh.sh`.
+Prefer a clone? `git clone https://github.com/kirilklein/mergeprint && cd mergeprint && ./refresh.sh`.
 
 ## Explore your report
 
@@ -57,12 +58,12 @@ snapshots did not include open PRs. A saved report is a snapshot, not a live inb
 ## More control
 
 ```bash
-python3 -m gh_dashboard.collect --account someone-else --end 2026-06-30 --days 180
-python3 -m gh_dashboard.collect --exclude-repo 'acme/*' --exclude-repo octodev/dotfiles
-python3 -m gh_dashboard.build --out out/index.html --anonymize-repos
+python3 -m mergeprint.collect --account someone-else --end 2026-06-30 --days 180
+python3 -m mergeprint.collect --exclude-repo 'acme/*' --exclude-repo octodev/dotfiles
+python3 -m mergeprint.build --out out/index.html --anonymize-repos
 ```
 
-Persistent defaults live in `config.local.json` (same keys as `gh_dashboard/config.json`):
+Persistent defaults live in `config.local.json` (same keys as `mergeprint/config.json`):
 
 ```json
 {"timezone": "Europe/Berlin", "country": "DE", "public_only": true,
@@ -73,7 +74,7 @@ Persistent defaults live in `config.local.json` (same keys as `gh_dashboard/conf
 
 The repo is small and documented for agents (`AGENTS.md`). One-line asks that work well:
 
-- "Run `gh-dashboard` and open the result."
+- "Run `mergeprint` and open the result."
 - "Add my vacation from 6 to 24 July to the config and rebuild."
 - "Add a chart of merges per repository per month."
 - "Build a version without repo names and publish it to gh-pages."
@@ -105,10 +106,10 @@ Conventions:
 
 ```bash
 ./demo.sh
-python3 -m py_compile gh_dashboard/*.py demo/*.py tools/*.py
+python3 -m py_compile mergeprint/*.py demo/*.py tools/*.py
 python3 -m unittest discover -s tests -v
 node --test tests/metrics.cjs
-uvx --from . gh-dashboard --help
+uvx --from . mergeprint --help
 ```
 
 Node is needed only for the aggregation tests, not to build or view a report. In a browser, check

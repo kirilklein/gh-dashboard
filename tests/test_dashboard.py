@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from gh_dashboard import build, collect
+from mergeprint import build, collect
 
 
 def item(number=1):

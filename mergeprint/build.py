@@ -1,6 +1,6 @@
 """Inline raw.json + config + holidays into template.html -> out/index.html.
 
-Usage: python3 -m gh_dashboard.build [--raw raw.json] [--out
+Usage: python3 -m mergeprint.build [--raw raw.json] [--out
 out/index.html] [--anonymize-repos]
                                      [--public-only] [--exclude-repo GLOB
 ...] [--config FILE]

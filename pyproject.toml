@@ -3,15 +3,15 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gh-dashboard"
+name = "mergeprint"
 version = "0.1.0"
-description = "A privacy-first, interactive one-page dashboard of your year on GitHub"
+description = "See what you actually shipped: a local, private report of your GitHub pull requests"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [{name = "Kiril Klein"}]
 requires-python = ">=3.9"
 dependencies = []
-keywords = ["github", "dashboard", "pull-requests", "developer-productivity", "year-in-review"]
+keywords = ["github", "pull-requests", "report", "engineering-metrics", "local-first"]
 classifiers = [
   "Environment :: Console",
   "License :: OSI Approved :: MIT License",
@@ -20,14 +20,14 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/kirilklein/gh-dashboard"
-Demo = "https://kirilklein.github.io/gh-dashboard/"
+Homepage = "https://github.com/kirilklein/mergeprint"
+Demo = "https://kirilklein.github.io/mergeprint/"
 
 [project.scripts]
-gh-dashboard = "gh_dashboard.cli:main"
+mergeprint = "mergeprint.cli:main"
 
 [tool.setuptools]
-packages = ["gh_dashboard"]
+packages = ["mergeprint"]
 
 [tool.setuptools.package-data]
-gh_dashboard = ["template.html", "holidays.json", "config.json"]
+mergeprint = ["template.html", "holidays.json", "config.json"]
