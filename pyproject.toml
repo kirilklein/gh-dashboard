@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "A privacy-first, interactive one-page dashboard of your year on GitHub"
 readme = "README.md"
 license = {text = "MIT"}
+authors = [{name = "Kiril Klein"}]
 requires-python = ">=3.9"
 dependencies = []
 keywords = ["github", "dashboard", "pull-requests", "developer-productivity", "year-in-review"]

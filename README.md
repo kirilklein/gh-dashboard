@@ -6,15 +6,16 @@ locally from the `gh` CLI, nothing leaves your machine.
 
 **[Live demo](https://kirilklein.github.io/gh-dashboard/)**
 
-[![gh-dashboard demo](docs/screenshot.png)](https://kirilklein.github.io/gh-dashboard/)
+[![gh-dashboard demo](https://raw.githubusercontent.com/kirilklein/gh-dashboard/main/docs/screenshot.png)](https://kirilklein.github.io/gh-dashboard/)
 
 ## One command
 
 ```bash
-uvx --from git+https://github.com/kirilklein/gh-dashboard gh-dashboard
+uvx gh-dashboard        # or: pipx run gh-dashboard
 ```
 
 Needs Python 3.9+ and the [`gh` CLI](https://cli.github.com/) logged in. Nothing else.
+Bleeding edge: `uvx --from git+https://github.com/kirilklein/gh-dashboard gh-dashboard`.
 
 ```
 GitHub account [octodev]:
